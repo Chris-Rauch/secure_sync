@@ -45,6 +45,7 @@ class DragAndDropViewState extends State<DragAndDropView> {
                 final size = await thirdEyeController.getFileSize(file);
                 final mime = await thirdEyeController.getFileMIME(file);
                 final data = await thirdEyeController.getFileData(file);
+                ThirdEyeFile(name, data);
 
                 setState(() {
                   thirdEyeMessage =
