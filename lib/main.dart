@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:logging/logging.dart';
+import 'package:secure_sync/error_handling/logging.dart';
 import 'package:secure_sync/views/drag_and_drop.dart';
 
 void main() {
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((LogRecord rec) {
-    print('${rec.level.name}: ${rec.time}: ${rec.message}');
-  });
+  //setupLogging();
   runApp(const MainApp());
 }
 

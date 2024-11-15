@@ -1,7 +1,11 @@
+import 'dart:typed_data';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
-import 'package:secure_sync/file_io/third_eye_file.dart';
+import 'package:secure_sync/detail_record/ledger.dart';
+//import 'package:secure_sync/error_handling/logging.dart';
+import 'package:secure_sync/file_handlers/file_handler.dart';
+import 'package:secure_sync/file_handlers/file_handler_factory.dart';
 
 class DragAndDropView extends StatefulWidget {
   const DragAndDropView({super.key});
@@ -12,14 +16,13 @@ class DragAndDropView extends StatefulWidget {
 
 class DragAndDropViewState extends State<DragAndDropView> {
   late DropzoneViewController thirdEyeController;
-  late DropzoneViewController quickbooksController;
 
-  String thirdEyeMessage = 'Drag and drop files here for Third Eye, or click ';
-  String quickbooksMessage =
-      'Drag and drop files here for Quickbooks, or click ';
+  String dropBoxMessage = 'Drag and drop files here, or click ';
 
   bool isHoveringThirdEye = false;
   bool isHoveringQuickbooks = false;
+
+  Ledger ledger = Ledger();
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +37,7 @@ class DragAndDropViewState extends State<DragAndDropView> {
             // Third Eye Dropzone
             _buildDropZone(
               label: 'Third Eye',
-              message: thirdEyeMessage,
+              message: dropBoxMessage,
               onDropzoneCreated: (controller) =>
                   thirdEyeController = controller,
               isHovering: isHoveringThirdEye,
@@ -42,62 +45,29 @@ class DragAndDropViewState extends State<DragAndDropView> {
                   setState(() => isHoveringThirdEye = hovering),
               onDrop: (file) async {
                 final name = await thirdEyeController.getFilename(file);
-                final size = await thirdEyeController.getFileSize(file);
-                final mime = await thirdEyeController.getFileMIME(file);
+                //final size = await thirdEyeController.getFileSize(file);
+                //final mime = await thirdEyeController.getFileMIME(file);
                 final data = await thirdEyeController.getFileData(file);
-                ThirdEyeFile(name, data);
+                handleFileDrop(name, data, ledger);
 
                 setState(() {
-                  thirdEyeMessage =
-                      'File dropped: $name, Size: $size bytes, Type: $mime';
+                  dropBoxMessage = name;
                 });
               },
               onTap: () async {
                 final file = await thirdEyeController.pickFiles();
                 final name = await thirdEyeController.getFilename(file[0]);
-                final size = await thirdEyeController.getFileSize(file[0]);
-                final mime = await thirdEyeController.getFileMIME(file[0]);
+                //final size = await thirdEyeController.getFileSize(file[0]);
+                //final mime = await thirdEyeController.getFileMIME(file[0]);
                 final data = await thirdEyeController.getFileData(file[0]);
+                handleFileDrop(name, data, ledger);
 
                 setState(() {
-                  thirdEyeMessage =
-                      'File selected: $name,\nSize: $size bytes,\nType: $mime';
+                  dropBoxMessage = name;
                 });
               },
             ),
             const SizedBox(height: 30), // Spacing between drop zones
-
-            // Quickbooks Dropzone
-            _buildDropZone(
-              label: 'Quickbooks',
-              message: quickbooksMessage,
-              onDropzoneCreated: (controller) =>
-                  quickbooksController = controller,
-              isHovering: isHoveringQuickbooks,
-              onHoverChange: (hovering) =>
-                  setState(() => isHoveringQuickbooks = hovering),
-              onDrop: (file) async {
-                final name = await quickbooksController.getFilename(file);
-                final size = await quickbooksController.getFileSize(file);
-                final mime = await quickbooksController.getFileMIME(file);
-
-                setState(() {
-                  quickbooksMessage =
-                      'File dropped: $name, Size: $size bytes, Type: $mime';
-                });
-              },
-              onTap: () async {
-                final file = await quickbooksController.pickFiles();
-                final name = await quickbooksController.getFilename(file[0]);
-                final size = await quickbooksController.getFileSize(file[0]);
-                final mime = await quickbooksController.getFileMIME(file[0]);
-
-                setState(() {
-                  quickbooksMessage =
-                      'File selected: $name, Size: $size bytes, Type: $mime';
-                });
-              },
-            ),
           ],
         ),
       ),
@@ -170,5 +140,17 @@ class DragAndDropViewState extends State<DragAndDropView> {
         ),
       ],
     );
+  }
+}
+
+void handleFileDrop(String fileName, Uint8List fileBytes, Ledger ledger) {
+  try {
+    final reader = FileHandlerFactory.createReader(fileName, fileBytes);
+    reader.trimTable();
+    reader.format();
+    ledger.addRecords(reader.getRecords());
+  } catch (e) {
+    //logger.severe(e);
+    print(e);
   }
 }
