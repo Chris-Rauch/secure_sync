@@ -6,6 +6,9 @@ class RegisterFile extends FileHandlers {
 
   @override
   DetailRecord getRecord(List<String> row) {
+    print(row);
+    if(row.length < 7) throw RangeError('Invalid index in getRecord');
+
     String checkNum = row[0];
     String firstPayee = row[3];
     String? secondPayee;
@@ -29,14 +32,6 @@ class RegisterFile extends FileHandlers {
     int extraTopRows = 4;
     int extraBottomRows = 1;
 
-    // remove the first 4 rows
-    table.removeRange(0, extraTopRows);
-
-    // remove the last row
-    for (int c = 0; c < extraBottomRows; ++c) {
-      table.removeLast();
-    }
-
     // remove all empty cells from table
     for (var row in table) {
       List<String> newRow = FileHandlers.cleanRow(row);
@@ -45,6 +40,14 @@ class RegisterFile extends FileHandlers {
       }
     }
     table = newTable;
+
+    // remove the first 4 rows
+    table.removeRange(0, extraTopRows);
+
+    // remove the last row
+    for (int c = 0; c < extraBottomRows; ++c) {
+      table.removeLast();
+    }
   }
 
   @override
