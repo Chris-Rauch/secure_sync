@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:secure_sync/error_handling/logging.dart';
+//import 'package:secure_sync/error_handling/logging.dart';
 import 'package:secure_sync/views/drag_and_drop.dart';
 
 void main() {

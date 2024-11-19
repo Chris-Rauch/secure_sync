@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:secure_sync/detail_record/ledger.dart';
 //import 'package:secure_sync/error_handling/logging.dart';
-import 'package:secure_sync/file_handlers/file_handler.dart';
 import 'package:secure_sync/file_handlers/file_handler_factory.dart';
 
 class DragAndDropView extends StatefulWidget {
@@ -147,10 +146,12 @@ void handleFileDrop(String fileName, Uint8List fileBytes, Ledger ledger) {
   try {
     final reader = FileHandlerFactory.createReader(fileName, fileBytes);
     reader.trimTable();
-    reader.format();
-    ledger.addRecords(reader.getRecords());
+    ledger.addAllRecords(reader.getRecords());
+    //ledger.download();
+    ledger.printLedger();
   } catch (e) {
     //logger.severe(e);
+    // ignore: avoid_print
     print(e);
   }
 }

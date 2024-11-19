@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class DetailRecord {
   DetailRecord(
       {this.recordCode,
@@ -21,26 +23,50 @@ class DetailRecord {
   String fileName;
   final String filler = ''.padRight(20);
 
+  
+
   String toFormattedString() {
-    return "$recordCode $accountNumber $checkNumber $amount $issueDate $blankOrVoid $firstPayee $secondPayee $filler";
+    final date = DateFormat('MMddyyyy').format(issueDate);
+    return "$recordCode $accountNumber $checkNumber $amount $date $blankOrVoid $firstPayee $secondPayee $filler";
   }
 }
 
 class Ledger {
   Ledger();
 
+  /// @brief Adds a single record to the the ledger
   void addRecord(DetailRecord record) {
     _totalRecord.add(record);
   }
 
-  void addRecords(List<DetailRecord> records) {
+  /// @brief Adds a list of records to the ledger
+  void addAllRecords(List<DetailRecord> records) {
     _totalRecord.addAll(records);
   }
 
-  // Method to get the total amount for all records
+  void download() {
+    //TODO Create a function that creates a file and triggers a download in the browser
+    throw UnimplementedError();
+  }
+
+  /// @brief Returns the total amount of all records
   double getTotalAmount() {
     return _totalRecord.fold(0, (sum, record) => sum + record.amount);
   }
 
-  List<DetailRecord> _totalRecord = [];
+  void printLedger() {
+    for (var record in _totalRecord) {
+      printRecord(record);
+    }
+    // ignore: avoid_print
+    print('Num Records: ${_totalRecord.length}');
+  }
+
+  void printRecord(DetailRecord record) {
+    // ignore: avoid_print
+    print(
+        "Record Code: ${record.recordCode}\nAccount Number: ${record.accountNumber}\nCheck Number: ${record.checkNumber}\nAmount: ${record.amount.toString()}\nIssue Date: ${record.issueDate}\nBlank/Void: ${record.blankOrVoid}\nFirst Payee: ${record.firstPayee}\nSecond Payee: ${record.secondPayee}\n");
+  }
+
+  final List<DetailRecord> _totalRecord = [];
 }

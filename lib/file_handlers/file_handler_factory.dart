@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 import 'package:collection/collection.dart';
 import 'package:secure_sync/file_handlers/file_handler.dart';
-import 'package:secure_sync/file_handlers/sub_classes/pf_file.dart';
 import 'package:secure_sync/file_handlers/sub_classes/quickbooks_file.dart';
 import 'package:secure_sync/file_handlers/sub_classes/register_file.dart';
 import 'package:secure_sync/file_handlers/sub_classes/void_checks_file.dart';
@@ -24,67 +23,73 @@ class FileHandlerFactory {
     if (name.endsWith('.xlsx')) {
       table = FileHandlers.convertExcelToList(bytes);
     } else if (name.endsWith('.csv')) {
-      table = FileHandlers.convertCSVToList(bytes);
+      table = FileHandlers.convertDelimFileToList(bytes, ',');
     } else {
-      throw ArgumentError('Unknown file type');
+      throw ArgumentError('This file type is not supported');
     }
 
     // get the header from the table and return the corresponding class
     List<String> fileHeader = _getHeader(table);
-    var listEquality = const ListEquality();
     if (listEquality.equals(fileHeader, headersText[0])) {
-      return PfFile(name, bytes, table);
+      return RegisterFile(name, bytes, table, fileHeader);
     } else if (listEquality.equals(fileHeader, headersText[1])) {
-      return RegisterFile(name, bytes, table);
+      return RegisterFile(name, bytes, table, fileHeader);
     } else if (listEquality.equals(fileHeader, headersText[2])) {
-      return QuickbooksFile(name, bytes, table);
+      return QuickbooksFile(name, bytes, table, fileHeader);
     } else if (listEquality.equals(fileHeader, headersText[3])) {
-      return VoidChecksFile(name, bytes, table);
+      return VoidChecksFile(name, bytes, table, fileHeader);
     } else {
       throw ArgumentError('Unknown file type');
     }
   }
 
   /// @brief Return the header row of the table. This is used to determine the
-  /// file type. 
-  /// 
+  /// file type.
+  ///
   /// @param table raw file data
-  /// 
-  /// @return the header of the file
+  ///
+  /// @return the header row of the file as a List<String>. Empty list if not
+  /// found
   static List<String> _getHeader(List<List<String>> table) {
-
+    List<String> row = [];
     // loop through headerIndices. These are the only possible header locations
     for (int headerIndex in headerIndices) {
       // this is a potential header
-      List<String> row =
-          table[headerIndex]; //TODO protect against out of bounds error
-      row = FileHandlers.cleanRow(row); // get rid of blank cells
+      if (headerIndex < table.length) {
+        row = table[headerIndex];
+        row = FileHandlers.cleanRow(row); // get rid of blank cells
+      }
 
       // check to see if row is a header
-      //TODO not case sensitive
-      if (headersText.contains(row)) {
-        return row;
+      for (var header in headersText) {
+        if (listEquality.equals(header, row)) {
+          return row;
+        }
       }
     }
 
-    return [];
+    return row;
   }
 
+  // class used to compare headers (List<String>)
+  static const listEquality = ListEquality();
+
   // use headers to identify different file types
-  static List<List<String>> headersText = [
+  static const List<List<String>> headersText = [
     // Producer Fee Check Register
     [
-      'CHECK #',
-      'PAYEE',
-      'STATUS',
-      'CHECK AMOUNT',
-      'FEE AMOUNT',
-      'ADJ. AMT',
-      'ISSUE DATE',
-      'DATE PROCESSED'
+      'Check #',
+      'Description',
+      'Contract #',
+      'Payee',
+      'Payee Code',
+      'Check Amount',
+      'Issue Date',
+      'Status',
+      'Date Processed',
     ],
 
-    // just the normal check register
+    // standard check register
     [
       'CHECK #',
       'DESCRIPTION',
@@ -99,28 +104,28 @@ class FileHandlerFactory {
 
     // QUICK BOOKS
     [
-      'TYPE',
-      'NUM',
-      'DATE',
-      'NAME',
-      'PAID AMOUNT',
-      'ORIGINAL AMOUNT',
+      'Type',
+      'Num',
+      'Date',
+      'Name',
+      'Paid Amount',
+      'Original Amount',
     ],
 
     // VOIDED CHECKS
     [
-      'PROCESSED DATE',
-      'CHEQUE #',
-      'PAYEE',
-      'CONTRACT #',
-      'FUNDING DATE',
-      'AMOUNT',
-      'DESCRIPTION',
-      'REASON',
-      'CHEQUE TYPE',
-      'GROUP NAME',
-      'VOID / REPLACED',
+      'Processed Date',
+      'Cheque #',
+      'Payee',
+      'Contract #',
+      'Funding Date',
+      'Amount',
+      'Description',
+      'Reason',
+      'Cheque Type',
+      'Group Name',
+      'Void / Replaced',
     ]
   ];
-  static List<int> headerIndices = [0, 10];
+  static const List<int> headerIndices = [0, 9];
 }

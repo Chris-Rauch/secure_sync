@@ -14,36 +14,67 @@
 ///
 library file_handlers;
 
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'package:secure_sync/detail_record/ledger.dart';
+import 'package:secure_sync/file_handlers/file_handler_factory.dart';
 
 abstract class FileHandlers {
-  FileHandlers(this.name, this.bytes, this.table);
+  FileHandlers(this.name, this.bytes, this.table, this.header);
 
-  // abstract methods
+  //=== ABSTRACT METHODS ======================================================
+  // 1. getRecord(List<String>)
+  // 2. trimTable()
+  //===========================================================================
+
+  /// @brief Abstract method to map a row of data from a List<String> into a
+  /// DetailRecord object.
+  ///
+  /// This method must be overridden in derived classes to account for
+  /// variations in column structure across different file types. Each
+  /// implementation should define how the input data is transformed into a
+  /// DetailRecord.
+  ///
+  /// @param row A List<String> representing a single row of data.
+  ///
+  /// @return A DetailRecord object constructed from the input data.
   DetailRecord getRecord(List<String> row);
+
+  /// @brief Abstract method to preprocess and clean the table data for
+  /// improved readability.
+  ///
+  /// This method is intended to be overridden in derived classes to remove
+  /// blank cells and unnecessary data from the table. The cleaned data should
+  /// be optimized for creating a DetailRecord. This is used in conjuction with
+  /// the function, getRecord, to locate table data
+  ///
+  /// @return void
   void trimTable();
-  void format();
 
   // data members
   final String name;
   final Uint8List bytes;
   List<List<String>> table;
+  final List<String> header;
 
   //=== CONCRETE FUNCTIONS =====================================================
   //
   //============================================================================
-  
+
   /// @brief Returns a list of records. This concrete function relies on the
-  /// custom implementation of the method 'getRecord'. 
-  /// 
-  /// @return a list of records 
+  /// custom implementation of the method 'getRecord'.
+  ///
+  /// @return a list of records
   List<DetailRecord> getRecords() {
     List<DetailRecord> records = [];
+
+    // iterate through the table. Ignore any header rows.
     for (var row in table) {
-      DetailRecord record = getRecord(row);
-      records.add(record);
+      if (!FileHandlerFactory.listEquality.equals(row, header)) {
+        DetailRecord record = getRecord(row);
+        records.add(record);
+      }
     }
     return records;
   }
@@ -55,6 +86,7 @@ abstract class FileHandlers {
       for (var val in row) {
         rowStr += '${val.padRight(8)},';
       }
+      // ignore: avoid_print
       print(rowStr);
     }
   }
@@ -79,7 +111,7 @@ abstract class FileHandlers {
     excel = Excel.decodeBytes(bytes);
     sheetName = excel.getDefaultSheet();
     if (sheetName == null) {
-      throw ArgumentError('Unknow sheet name');
+      throw ArgumentError('Unknown sheet name');
     }
 
     sheet = excel[sheetName];
@@ -93,9 +125,17 @@ abstract class FileHandlers {
     return tmpTable;
   }
 
-  static List<List<String>> convertCSVToList(Uint8List bytes) {
-    //TODO
-    throw UnimplementedError();
+  static List<List<String>> convertDelimFileToList(
+      Uint8List bytes, String delim) {
+    String fileAsString = utf8.decode(bytes);
+    List<String> split = fileAsString.split('\n');
+    List<List<String>> newTable = [];
+
+    for (var row in split) {
+      newTable.add(row.split(delim));
+    }
+
+    return newTable;
   }
 
   /// @brief Grabs the cell at [col, row] and returns the value as a string.
@@ -185,5 +225,16 @@ abstract class FileHandlers {
       }
     }
     return cleanRow;
+  }
+
+  /// @brief Removes the specified column from the table regardless of empty
+  /// space.
+  static bool removeCol(List<List<String>> table, int col) {
+    for (int i = 0; i < table.length; ++i) {
+      if (col < table[i].length) {
+        table[i].removeAt(col);
+      }
+    }
+    return true;
   }
 }
