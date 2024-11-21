@@ -40,9 +40,4 @@ class QuickbooksFile extends FileHandlers {
     }
     table = newTable;
   }
-  
-  @override
-  void format() {
-    
-  }
 }

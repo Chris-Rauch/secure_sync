@@ -6,7 +6,6 @@ class RegisterFile extends FileHandlers {
 
   @override
   DetailRecord getRecord(List<String> row) {
-    print(row);
     if(row.length < 7) throw RangeError('Invalid index in getRecord');
 
     String checkNum = row[0];
@@ -48,9 +47,5 @@ class RegisterFile extends FileHandlers {
     for (int c = 0; c < extraBottomRows; ++c) {
       table.removeLast();
     }
-  }
-
-  @override
-  void format() {
   }
 }

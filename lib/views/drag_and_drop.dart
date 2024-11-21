@@ -1,8 +1,6 @@
 import 'dart:typed_data';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:secure_sync/detail_record/ledger.dart';
 //import 'package:secure_sync/error_handling/logging.dart';

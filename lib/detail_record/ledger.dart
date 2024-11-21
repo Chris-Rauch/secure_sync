@@ -114,7 +114,11 @@ class Ledger {
   /// @brief Adds the total Record.sum attributes in the list
   /// @return the sum, as a double, of all amounts
   double getTotalAmount() {
-    return _totalRecord.fold(0, (sum, record) => sum + record.amount);
+    double tot = _totalRecord.fold(0, (sum, record) => sum + record.amount);
+    if(tot > 1000000000) {
+      throw ArgumentError('The total amount exceeds \$1,000,000,000.00');
+    }
+    return tot;
   }
 
   /// @brief print to console for debug

@@ -36,9 +36,4 @@ class VoidChecksFile extends FileHandlers {
     }
     table = newTable;
   }
-  
-  @override
-  void format() {
-    
-  }
 }
